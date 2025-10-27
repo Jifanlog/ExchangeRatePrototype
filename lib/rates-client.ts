@@ -26,5 +26,6 @@ export function computeAllCrossRates(usdRates: UsdRates): Record<string, number>
       result[key] = computeCrossRate(base, quote, usdRates);
     }
   }
+  console.log('Total cross rates computed: ' + Object.keys(result).length);
   return result;
 }

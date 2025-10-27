@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Converter from "@/app/components/Converter";
+import RateMatrix from "@/app/components/RateMatrix";
 import { fetchUsdRatesCached } from "@/lib/rates";
 
 export default async function Home() {
@@ -41,6 +42,10 @@ export default async function Home() {
         </div>
 
         <Converter />
+        
+        <div className="w-full">
+          <RateMatrix />
+        </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         <a
