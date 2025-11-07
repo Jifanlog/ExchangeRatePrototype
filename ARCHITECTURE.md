@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application fetches USD-based exchange rates from a third-party API, caches them (Redis + in-memory backup), and computes cross-currency rates for display and conversion.
+This application fetches USD-based exchange rates from a third-party API, caches them (Redis + in-memory backup), and computes cross-currency rates for the interactive converter.
 
 ---
 
@@ -20,9 +20,9 @@ External API (exchangerate-api.com)
                          ▼
               [fetchUsdRatesCached()]
                          │
-                         ├──► /api/rates (GET) ──► Client Components
+                         ├──► /api/rates (GET) ──► Client components (fallback fetch)
                          │
-                         └──► app/page.tsx (Server Component)
+                         └──► app/page.tsx (Server component)
 ```
 
 ---
@@ -61,13 +61,8 @@ External API (exchangerate-api.com)
   - Returns `1` if `from === to`
   - Throws error if missing rate data for either currency
 
-- **`computeAllCrossRates(usdRates)`**: Generates N×N matrix of all currency pairs
-  - Creates keys in format: `${base}_${quote}`
-  - Computes all possible combinations
-  - Logs total number of computed rates
-
 **Type Definitions:**
-- `UsdRates = Record<string,-pnumber> & { USD: 1 }`
+- `UsdRates = Record<string, number> & { USD: 1 }`
 
 ---
 
@@ -89,30 +84,17 @@ External API (exchangerate-api.com)
 ### 4. UI Components
 
 #### Server Component: `app/page.tsx`
-- **Renders**: Table of all USD→Code base rates
-- **Data Source**: Directly calls `fetchUsdRatesCached()` during server-side rendering
-- **Shows**: Currency code and USD conversion rate (6 decimal precision)
+- **Renders**: A centered converter
+- **Data Source**: Calls `fetchUsdRatesCached()` during server-side rendering and passes the result to the client converter as `initialRates`
 
 #### Client Component: `app/components/Converter.tsx`
 - **Purpose**: Interactive currency converter
 - **Behavior**:
-  - Fetches `/api/rates` on mount
-  - Stores USD rates in state
-  - Computes cross-rates on-the-fly as user changes `from`/`to` currencies
-  - Displays conversion result in real-time
-- **Features**: Swap button (⇄) to reverse currency pair
-
-#### Client Component: `app/components/RateMatrix.tsx`
-- **Purpose**: Display comprehensive N×N exchange rate matrix
-- **Behavior**:
-  - Fetches `/api/rates` on mount
-  - Computes all cross-rates using `computeAllCrossRates()`
-  - Renders table with all currency pairs
-  - Supports currency filtering (show selected currencies only)
-- **Features**:
-  - "Refresh Rates" button (re-fetches `/api/rates` - does NOT trigger server refresh)
-  - "Show All" / "Clear Selection" buttons
-  - Visual indicators: Blue for same currency (rate = 1), Green for direct USD rates
+  - Hydrates immediately with `initialRates` received from the server
+  - Fetches `/api/rates` on mount as a background refresh (only clears UI if both server + client fetch fail)
+  - Computes cross-rates on-the-fly as the user changes `from`/`to` currencies
+  - Displays conversion results in real-time
+- **Features**: Swap button (⇄) to reverse currency pair, flag-assisted currency pickers
 
 ---
 
@@ -155,11 +137,9 @@ Server renders page.tsx
     ↓
 Calls fetchUsdRatesCached()
     ↓
-Returns cached rates → Displays USD base rates table
+Passes cached rates to Converter as initialRates
     ↓
-Client components mount → Fetch /api/rates
-    ↓
-Converter & RateMatrix display with rate data
+Client hydrates instantly with real data → Optional background fetch refreshes cache
 ```
 
 ### 2. Scheduled Refresh (Automatic)
@@ -176,17 +156,8 @@ Updates Redis + backup cache
 ```
 
 ### 3. Manual Refresh (From UI)
-```
-User clicks "Refresh Rates" in RateMatrix
-    ↓
-Client re-fetches GET /api/rates
-    ↓
-Gets latest cached rates (from Redis or backup)
-    ↓
-Updates UI with current cached data
-```
 
-**Note**: The "Refresh Rates" button in the UI does NOT trigger a server-side refresh. It only re-fetches the currently cached data. To trigger an actual refresh, you would need to call POST `/api/rates/refresh` with authentication.
+The current UI does not expose a manual refresh control. The converter’s data updates automatically when `/api/rates` returns new cached values.
 
 ---
 

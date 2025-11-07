@@ -17,15 +17,5 @@ export function computeCrossRate(
   return usdToTo / usdToFrom;
 }
 
-export function computeAllCrossRates(usdRates: UsdRates): Record<string, number> {
-  const result: Record<string, number> = {};
-  const codes = Object.keys(usdRates);
-  for (const base of codes) {
-    for (const quote of codes) {
-      const key = `${base}_${quote}`;
-      result[key] = computeCrossRate(base, quote, usdRates);
-    }
-  }
-  console.log('Total cross rates computed: ' + Object.keys(result).length);
-  return result;
-}
+// Additional cross-rate helpers can be added here if we reintroduce the
+// comprehensive matrix view or need cached pair computations.

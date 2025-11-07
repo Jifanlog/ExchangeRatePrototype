@@ -12,12 +12,12 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ### Helpers
 
-- `lib/currencies.ts` lists displayed currencies.
-- `lib/rates.ts` provides `fetchUsdRatesCached`, `computeCrossRate`, `computeAllCrossRates`.
+- `lib/currencies.ts` (if present) can list available currencies.
+- `lib/rates.ts` provides `fetchUsdRatesCached` and `computeCrossRate`.
 
 ### UI
 
-- Homepage shows a USD rates table and a client-side converter component.
+- Homepage shows the cross-currency converter centered on the page.
 
 ## Getting Started
 
