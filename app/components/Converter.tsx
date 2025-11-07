@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { computeCrossRate } from "@/lib/rates-client";
+import { computeCrossRate, UsdRates } from "@/lib/rates-client";
+import CurrencySelect from "./CurrencySelect";
 
-type UsdResponse = { base: "USD"; rates: Record<string, number> };
+type UsdResponse = { base: "USD"; rates: UsdRates };
 
-export default function Converter() {
-  const [usdRates, setUsdRates] = useState<Record<string, number> | null>(null);
+type ConverterProps = {
+  initialRates?: UsdRates;
+};
+
+export default function Converter({ initialRates }: ConverterProps) {
+  const [usdRates, setUsdRates] = useState<UsdRates | null>(initialRates ?? null);
   const [from, setFrom] = useState("USD");
   const [to, setTo] = useState("EUR");
   const [amount, setAmount] = useState(1);
@@ -15,8 +20,13 @@ export default function Converter() {
     fetch("/api/rates")
       .then((r) => r.json())
       .then((data: UsdResponse) => setUsdRates(data.rates))
-      .catch(() => setUsdRates(null));
-  }, []);
+      .catch(() => {
+        // Only clear rates if we have nothing to show
+        if (!initialRates) {
+          setUsdRates(null);
+        }
+      });
+  }, [initialRates]);
 
   const cross = useMemo(() => {
     if (!usdRates) return null;
@@ -45,17 +55,11 @@ export default function Converter() {
           min={0}
           step={0.01}
         />
-        <select
-          className="border rounded px-2 py-1 bg-white text-black dark:bg-white dark:text-black"
+        <CurrencySelect
           value={from}
-          onChange={(e) => setFrom(e.target.value)}
-        >
-          {options.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
+          options={options}
+          onChange={setFrom}
+        />
         <button
           type="button"
           aria-label="Swap currencies"
@@ -68,17 +72,11 @@ export default function Converter() {
           ⇄
         </button>
         <span className="opacity-70">to</span>
-        <select
-          className="border rounded px-2 py-1 bg-white text-black dark:bg-white dark:text-black"
+        <CurrencySelect
           value={to}
-          onChange={(e) => setTo(e.target.value)}
-        >
-          {options.map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
+          options={options}
+          onChange={setTo}
+        />
       </div>
       <div className="text-sm opacity-80">
         {cross == null ? "Loading…" : `1 ${from} = ${cross.toFixed(6)} ${to}`}

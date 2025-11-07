@@ -41,10 +41,10 @@ export default async function Home() {
           </div>
         </div>
 
-        <Converter />
+        <Converter initialRates={usd} />
         
         <div className="w-full">
-          <RateMatrix />
+          <RateMatrix initialRates={usd} />
         </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">

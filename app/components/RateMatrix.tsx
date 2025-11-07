@@ -3,19 +3,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { computeAllCrossRates, UsdRates } from "@/lib/rates-client";
 
-type UsdResponse = { base: "USD"; rates: Record<string, number> };
+type UsdResponse = { base: "USD"; rates: UsdRates };
 
-export default function RateMatrix() {
-  const [usdRates, setUsdRates] = useState<UsdRates | null>(null);
+type RateMatrixProps = {
+  initialRates?: UsdRates;
+};
+
+export default function RateMatrix({ initialRates }: RateMatrixProps) {
+  const [usdRates, setUsdRates] = useState<UsdRates | null>(initialRates ?? null);
   const [selectedCurrencies, setSelectedCurrencies] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialRates);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchRates = async (isRefresh = false) => {
     if (isRefresh) {
       setIsRefreshing(true);
     } else {
-      setIsLoading(true);
+      if (!usdRates) {
+        setIsLoading(true);
+      }
     }
     
     try {
@@ -31,8 +37,12 @@ export default function RateMatrix() {
   };
 
   useEffect(() => {
-    fetchRates();
-  }, []);
+    if (!initialRates) {
+      fetchRates();
+    }
+  // We intentionally exclude fetchRates from deps to avoid re-creating the function each render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialRates]);
 
   const allCrossRates = useMemo(() => {
     if (!usdRates) return null;
